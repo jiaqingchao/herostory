@@ -1,7 +1,5 @@
 package org.tinygame.herostory.model;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 /**
  * 用户
  */
@@ -21,7 +19,7 @@ public class User {
 
     private int totalHp;
 
-    private AtomicInteger currHp;
+    private int currHp;
 
     public void setUserId(int userId) {
         this.userId = userId;
@@ -48,7 +46,7 @@ public class User {
     }
 
     public int getCurrHp() {
-        return currHp.get();
+        return currHp;
     }
 
     public MoveState getMoveState() {
@@ -56,9 +54,9 @@ public class User {
     }
 
     public void setCurrHp(int currHp) {
-        this.currHp.set(currHp);;
+        this.currHp = currHp;;
     }
-    public void subtractHp(int currHp) {
-        this.currHp.addAndGet(-currHp);;
+    public void subtractHp(int subtractHp) {
+        this.currHp = this.currHp - subtractHp;
     }
 }
