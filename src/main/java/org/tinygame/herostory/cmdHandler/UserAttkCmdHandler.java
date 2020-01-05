@@ -12,7 +12,7 @@ import org.tinygame.herostory.msg.GameMsgProtocol;
 public class UserAttkCmdHandler implements ICmdHandler<GameMsgProtocol.UserAttkCmd> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserAttkCmdHandler.class);
-    private int hurt = 10;
+    private static int subtractHp = 10;
 
     @Override
     public void handle(ChannelHandlerContext ctx, GameMsgProtocol.UserAttkCmd cmd) {
@@ -21,47 +21,75 @@ public class UserAttkCmdHandler implements ICmdHandler<GameMsgProtocol.UserAttkC
         }
 
         //获取被攻击者Id
-        Integer attlUserId = (Integer) ctx.channel().attr(AttributeKey.valueOf("userId")).get();
-        if (attlUserId == null){
+        Integer attkUserId = (Integer) ctx.channel().attr(AttributeKey.valueOf("userId")).get();
+        if (attkUserId == null){
             return;
         }
 
         //获取被攻击者Id
         int targetUserId = cmd.getTargetUserId();
 
-        //获取被攻击者
-        User targetUser = UserManager.getUserById(targetUserId);
-        if(targetUser == null){
-            return;
-        }
-        targetUser.setSurplusHp(targetUser.getSurplusHp() - hurt);
-
         GameMsgProtocol.UserAttkResult.Builder resultBuilder = GameMsgProtocol.UserAttkResult.newBuilder();
-        resultBuilder.setAttkUserId(attlUserId);
+        resultBuilder.setAttkUserId(attkUserId);
         resultBuilder.setTargetUserId(targetUserId);
 
         GameMsgProtocol.UserAttkResult newResult = resultBuilder.build();
         BraoadCaster.broadCast(newResult);
 
-        //减去HP
-        GameMsgProtocol.UserSubtractHpResult.Builder hpResultBuilder = GameMsgProtocol.UserSubtractHpResult.newBuilder();
-        hpResultBuilder.setTargetUserId(targetUserId);
-        hpResultBuilder.setSubtractHp(hurt);
-
-        GameMsgProtocol.UserSubtractHpResult newHpResult = hpResultBuilder.build();
-        BraoadCaster.broadCast(newHpResult);
-
-        if(targetUser.getSurplusHp() > 0){
+        //获取被攻击者
+        User targetUser = UserManager.getUserById(targetUserId);
+        if(targetUser == null){
             return;
         }
 
-        UserManager.removeUserById(targetUserId);
+        LOGGER.info("当前线程 = {}", Thread.currentThread().getName());
+
+        //减去HP
+        targetUser.subtractHp(subtractHp);
+
+        //广播减血消息
+        broadCastSubtractHp(targetUserId, subtractHp);
+
+        if(targetUser.getCurrHp() <= 0){
+            // 清除死亡用户
+            UserManager.removeUserById(targetUserId);
+            //广播死亡消息
+            broadcastDie(targetUserId);
+        }
+    }
+
+
+    /**
+     * 广播减血消息
+     * @param targetUserId
+     * @param subtractHp
+     */
+    private static void broadCastSubtractHp(int targetUserId, int subtractHp) {
+        if(targetUserId <= 0 || subtractHp <= 0){
+            return;
+        }
+
+        GameMsgProtocol.UserSubtractHpResult.Builder hpResultBuilder = GameMsgProtocol.UserSubtractHpResult.newBuilder();
+        hpResultBuilder.setTargetUserId(targetUserId);
+        hpResultBuilder.setSubtractHp(subtractHp);
+
+        GameMsgProtocol.UserSubtractHpResult newHpResult = hpResultBuilder.build();
+        BraoadCaster.broadCast(newHpResult);
+    }
+
+    /**
+     * 广播死亡消息
+     * @param targetUserId
+     */
+    private void broadcastDie(int targetUserId) {
+        if(targetUserId <= 0){
+            return;
+        }
 
         GameMsgProtocol.UserDieResult.Builder dieResultBuilder = GameMsgProtocol.UserDieResult.newBuilder();
         dieResultBuilder.setTargetUserId(targetUserId);
 
         GameMsgProtocol.UserDieResult newDieResult = dieResultBuilder.build();
         BraoadCaster.broadCast(newDieResult);
-
     }
 }

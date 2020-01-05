@@ -1,5 +1,7 @@
 package org.tinygame.herostory.model;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  * 用户
  */
@@ -12,10 +14,14 @@ public class User {
      * 英雄形象
      */
     private String heroAvatar;
+    /**
+     * 移动状态
+     */
+    public final MoveState moveState = new MoveState();
 
-    private int totalHp = 100;
+    private int totalHp;
 
-    private int surplusHp = 100;
+    private AtomicInteger currHp;
 
     public void setUserId(int userId) {
         this.userId = userId;
@@ -41,11 +47,18 @@ public class User {
         this.totalHp = totalHp;
     }
 
-    public int getSurplusHp() {
-        return surplusHp;
+    public int getCurrHp() {
+        return currHp.get();
     }
 
-    public void setSurplusHp(int surplusHp) {
-        this.surplusHp = surplusHp;
+    public MoveState getMoveState() {
+        return moveState;
+    }
+
+    public void setCurrHp(int currHp) {
+        this.currHp.set(currHp);;
+    }
+    public void subtractHp(int currHp) {
+        this.currHp.addAndGet(-currHp);;
     }
 }

@@ -28,7 +28,7 @@ public final class CmdHandlerFactory {
     public static void init() {
         Set<Class<?>> clazzSet = PackageUtil.listSubClazz(
                 CmdHandlerFactory.class.getPackage().getName(),
-                false,
+                true,
                 ICmdHandler.class);
 
         for (Class clazz : clazzSet) {
@@ -47,7 +47,8 @@ public final class CmdHandlerFactory {
                 Class<?>[] paramTypeArray = currMethod.getParameterTypes();
 
                 if (paramTypeArray.length < 2 ||
-                        !GeneratedMessageV3.class.isAssignableFrom(paramTypeArray[1])) {
+                        !GeneratedMessageV3.class.isAssignableFrom(paramTypeArray[1]) ||
+                        GeneratedMessageV3.class.equals(paramTypeArray[1])) {
                     continue;
                 }
 
